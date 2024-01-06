@@ -43,9 +43,33 @@ async function run() {
     /*Options from database */
 
     app.get("/appointOptions", async (req, res) => {
+      const date = req.query.date;
       const query = {};
       const options = await appointOptionCollection.find(query).toArray();
+      /*get the bookings provided the date */
+
+      const bookingQuery = { Date: date };
+      const booked = await bookingsCollection.find(bookingQuery).toArray();
+
+      options.forEach((option) => {
+        const optionBooked = booked.filter(
+          (book) => book.Service === option.name
+        );
+        const bookedSlots = optionBooked.map((book) => book.Time);
+        const reminingSlots = option.slots.filter(
+          (slot) => !bookedSlots.includes(slot)
+        );
+        option.slots = reminingSlots;
+      });
       res.send(options);
+    });
+    /*appointment options API v2 */
+    app.get("/v2/appointOptions", async (req, res) => {
+      const date = req.query.date;
+      const options = await appointOptionCollection.aggregate([
+        /*pipelines */
+        {},
+      ]);
     });
 
     /*Bookings */
