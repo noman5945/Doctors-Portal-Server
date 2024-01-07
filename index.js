@@ -63,18 +63,71 @@ async function run() {
       });
       res.send(options);
     });
+
     /*appointment options API v2 */
     app.get("/v2/appointOptions", async (req, res) => {
       const date = req.query.date;
-      const options = await appointOptionCollection.aggregate([
-        /*pipelines */
-        {},
-      ]);
+      const options = await appointOptionCollection
+        .aggregate([
+          /*pipelines */
+          //pipeline 1: selecting bookings for each options
+          {
+            $lookup: {
+              from: "bookings", //from bookings collection
+              localField: "name", // match 'name' field of appointmentOptions collection with
+              foreignField: "Service", // 'Service' field of bookings collection
+              pipline: [
+                {
+                  $match: {
+                    $expr: {
+                      $eq: ["Date", date], // getting datas of which matches 'Date' field with given 'date'
+                    },
+                  },
+                },
+              ],
+              as: "booked", //an Array named booked
+            },
+          },
+          //pipeline 2:getting booked slot
+          {
+            $project: {
+              name: 1,
+              slots: 1,
+              booked: {
+                $map: {
+                  input: "$booked",
+                  as: "book",
+                  in: "$$book.slot",
+                },
+              },
+            },
+          },
+          //pipline 3:???
+          {
+            $project: {
+              name: 1,
+              slots: {
+                $setDifference: ["$slots", "$booked"],
+              },
+            },
+          },
+        ])
+        .toArray();
+      res.send(options);
     });
 
     /*Bookings */
     app.post("/bookings", async (req, res) => {
       const booking = req.body;
+      console.log(booking);
+      const bookedQuery = { Date: booking.Date, Service: booking.Service };
+      const alreadyBooked = await bookingsCollection
+        .find(bookedQuery)
+        .toArray();
+      if (alreadyBooked.length) {
+        const messege = `You already have a booking on ${booking.Date}`;
+        return res.send({ acknowledged: false, messege });
+      }
       const result = await bookingsCollection.insertOne(booking);
       res.send(result);
     });
