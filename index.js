@@ -120,7 +120,11 @@ async function run() {
     app.post("/bookings", async (req, res) => {
       const booking = req.body;
       console.log(booking);
-      const bookedQuery = { Date: booking.Date, Service: booking.Service };
+      const bookedQuery = {
+        Date: booking.Date,
+        Service: booking.Service,
+        Email: booking.Email,
+      };
       const alreadyBooked = await bookingsCollection
         .find(bookedQuery)
         .toArray();
