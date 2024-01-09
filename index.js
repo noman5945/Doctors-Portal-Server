@@ -117,6 +117,13 @@ async function run() {
     });
 
     /*Bookings */
+    app.get("/clientBookings", async (req, res) => {
+      const clientEmail = req.query.email;
+      const query = { Email: clientEmail };
+      const bookings = await bookingsCollection.find(query).toArray();
+      res.send(bookings);
+    });
+
     app.post("/bookings", async (req, res) => {
       const booking = req.body;
       console.log(booking);
