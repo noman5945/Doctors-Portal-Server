@@ -23,8 +23,7 @@ function veriftyJWT(req, res, next) {
   const token = authorization.split(" ")[1];
   jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
     if (err) {
-      console.log(err.message);
-      return res.status(403).send({ messege: "forbidden access" });
+      return res.status(403).send({ messege: err.message });
     }
     req.decoded = decoded;
     console.log(decoded);
@@ -140,7 +139,7 @@ async function run() {
       const clientEmail = req.query.email;
       const decodedEmail = req.decoded.email;
       if (clientEmail !== decodedEmail) {
-        return res.status(403).send("forbidden access");
+        return res.status(403).send("forbidden access mail dont match");
       }
       const query = { Email: clientEmail };
       const bookings = await bookingsCollection.find(query).toArray();
@@ -178,14 +177,22 @@ async function run() {
     app.get("/jwt", async (req, res) => {
       const email = req.query.email;
       const query = { Email: email };
-      const getExistingUser = await usersCollection.find(query);
-      if (getExistingUser) {
+      const getExistingUser = await usersCollection.find(query).toArray();
+      if (getExistingUser.length > 0) {
+        //console.log(getExistingUser);
         const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, {
           expiresIn: "1h",
         });
         return res.send({ accesToken: token });
       }
-      return res.status(403).send({});
+      return res.status(403).send({ message: "user email does not exist" });
+    });
+
+    //All Users
+    app.get("/allusers", async (req, res) => {
+      const query = {};
+      const getAllUsers = await usersCollection.find(query).toArray();
+      res.send(getAllUsers);
     });
   } finally {
   }
