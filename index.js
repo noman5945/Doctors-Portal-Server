@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 
@@ -193,6 +193,26 @@ async function run() {
       const query = {};
       const getAllUsers = await usersCollection.find(query).toArray();
       res.send(getAllUsers);
+    });
+    app.get("/allusers/admin/:email", async (req, res) => {
+      const userEmail = req.params.email;
+      const query = { Email: userEmail };
+      const getUser = await usersCollection.findOne(query);
+      res.send({ isAdmin: getUser?.role === "admin" });
+    });
+    app.put("/allusers/admin/:id", async (req, res) => {
+      const userID = req.params.id;
+      const upsertRole = await usersCollection.updateOne(
+        { _id: new ObjectId(userID) },
+        {
+          $set: {
+            role: "admin",
+          },
+        },
+        { upsert: true }
+      );
+      console.log(upsertRole);
+      res.send(upsertRole);
     });
   } finally {
   }
