@@ -57,6 +57,8 @@ async function run() {
       .collection("bookings");
 
     const usersCollection = client.db("Doctors-Portal").collection("users");
+
+    const doctorsCollection = client.db("Doctors-Portal").collection("doctors");
     /*API s */
     /*Options from database */
 
@@ -134,6 +136,15 @@ async function run() {
       res.send(options);
     });
 
+    //getting specific field only using 'project' operation. inside project assign 1 to the selected field
+    app.get("/appointmentSpecialty", async (req, res) => {
+      const query = {};
+      const result = await appointOptionCollection
+        .find(query)
+        .project({ name: 1 })
+        .toArray();
+      res.send(result);
+    });
     /*Bookings */
     app.get("/clientBookings", veriftyJWT, async (req, res) => {
       const clientEmail = req.query.email;
@@ -213,6 +224,16 @@ async function run() {
       );
       console.log(upsertRole);
       res.send(upsertRole);
+    });
+
+    /**
+     * Doctors handling API
+     */
+    app.post("/addDoctor", async (req, res) => {
+      const doctor = req.body;
+      console.log(doctor);
+      const addDoctor = await doctorsCollection.insertOne(doctor);
+      res.send(addDoctor);
     });
   } finally {
   }
