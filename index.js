@@ -246,6 +246,14 @@ async function run() {
       const allDoctors = await doctorsCollection.find(query).toArray();
       res.send(allDoctors);
     });
+
+    app.delete("/delete-doctor", async (req, res) => {
+      const delete_target = req.query.id;
+      const query = { _id: new ObjectId(delete_target) };
+      const deleted_doc = await doctorsCollection.deleteOne(query);
+
+      res.send(deleted_doc);
+    });
   } finally {
   }
 }
