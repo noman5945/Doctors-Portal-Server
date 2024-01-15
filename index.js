@@ -235,6 +235,17 @@ async function run() {
       const addDoctor = await doctorsCollection.insertOne(doctor);
       res.send(addDoctor);
     });
+
+    app.post("/manage-doctors", veriftyJWT, async (req, res) => {
+      const adminEmail = req.query.email;
+      const decodedEmail = req.decoded.email;
+      if (adminEmail !== decodedEmail) {
+        return res.status(403).send("forbidden access mail dont match");
+      }
+      const query = {};
+      const allDoctors = await doctorsCollection.find(query).toArray();
+      res.send(allDoctors);
+    });
   } finally {
   }
 }
