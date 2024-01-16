@@ -7,7 +7,6 @@ const port = process.env.PORT || 5000;
 
 const app = express();
 
-//middleware
 app.use(cors());
 app.use(express.json());
 
@@ -15,8 +14,10 @@ app.get("/", async (req, res) => {
   res.send("doctors portal server is running");
 });
 
+//middleware
 function veriftyJWT(req, res, next) {
   const authorization = req.headers.authorization;
+  //console.log(authorization);
   if (!authorization) {
     return res.status(401).send("unauthorized access");
   }
@@ -59,6 +60,20 @@ async function run() {
     const usersCollection = client.db("Doctors-Portal").collection("users");
 
     const doctorsCollection = client.db("Doctors-Portal").collection("doctors");
+
+    /**
+     * Middleware for verify Admin
+     */
+    async function verifyAdmin(req, res, next) {
+      const decodedEmail = req.decoded.email;
+      const query = { Email: decodedEmail };
+      const checkUserRole = await usersCollection.findOne(query);
+      //console.log(checkUserRole);
+      if (checkUserRole?.role !== "admin") {
+        return res.status(403).send({ message: "User not Admin" });
+      }
+      next();
+    }
     /*API s */
     /*Options from database */
 
@@ -229,14 +244,14 @@ async function run() {
     /**
      * Doctors handling API
      */
-    app.post("/addDoctor", async (req, res) => {
+    app.post("/addDoctor", veriftyJWT, verifyAdmin, async (req, res) => {
       const doctor = req.body;
       console.log(doctor);
       const addDoctor = await doctorsCollection.insertOne(doctor);
       res.send(addDoctor);
     });
 
-    app.post("/manage-doctors", veriftyJWT, async (req, res) => {
+    app.post("/manage-doctors", veriftyJWT, verifyAdmin, async (req, res) => {
       const adminEmail = req.query.email;
       const decodedEmail = req.decoded.email;
       if (adminEmail !== decodedEmail) {
@@ -247,11 +262,11 @@ async function run() {
       res.send(allDoctors);
     });
 
-    app.delete("/delete-doctor", async (req, res) => {
+    app.delete("/delete-doctor", veriftyJWT, verifyAdmin, async (req, res) => {
       const delete_target = req.query.id;
       const query = { _id: new ObjectId(delete_target) };
       const deleted_doc = await doctorsCollection.deleteOne(query);
-
+      console.log(deleted_doc);
       res.send(deleted_doc);
     });
   } finally {
