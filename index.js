@@ -74,6 +74,7 @@ async function run() {
       }
       next();
     }
+    /*****************************MiddleWare End *********************************/
     /*API s */
     /*Options from database */
 
@@ -191,6 +192,15 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/bookings-payment", async (req, res) => {
+      const bookingID = req.query.id;
+      const query = { _id: new ObjectId(bookingID) };
+      const getBooking = await bookingsCollection.findOne(query);
+      res.send(getBooking);
+    });
+
+    /******************************Bookings End****************************************** */
+
     // adding new user to mongodb
     app.post("/addUser", async (req, res) => {
       const user = req.body;
@@ -213,7 +223,7 @@ async function run() {
       }
       return res.status(403).send({ message: "user email does not exist" });
     });
-
+    /********************************** WebToken end ***************************************/
     //All Users
     app.get("/allusers", async (req, res) => {
       const query = {};
@@ -240,7 +250,7 @@ async function run() {
       console.log(upsertRole);
       res.send(upsertRole);
     });
-
+    /***********************All Users End***************************** */
     /**
      * Doctors handling API
      */
@@ -268,7 +278,21 @@ async function run() {
       const deleted_doc = await doctorsCollection.deleteOne(query);
       console.log(deleted_doc);
       res.send(deleted_doc);
+
+      /**********************************Doctors handling API End******************************************************* */
     });
+
+    /****************Extras*************** */
+    app.put("/temp-addprice", async (req, res) => {
+      const query = {};
+      const addPrice = await appointOptionCollection.updateMany(
+        query,
+        { $set: { price: 99 } },
+        { upsert: true }
+      );
+      res.send(addPrice);
+    });
+    /***************Extras End************ */
   } finally {
   }
 }
