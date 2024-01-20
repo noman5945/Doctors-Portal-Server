@@ -62,6 +62,10 @@ async function run() {
 
     const doctorsCollection = client.db("Doctors-Portal").collection("doctors");
 
+    const paymentsCollection = client
+      .db("Doctors-Portal")
+      .collection("payments");
+
     /**
      * Middleware for verify Admin
      */
@@ -282,7 +286,9 @@ async function run() {
 
       /**********************************Doctors handling API End******************************************************* */
     });
-
+    /**
+     * Create Payment Intent
+     */
     app.post("/create-payment-intent", async (req, res) => {
       const booking = req.body;
       const price = booking.Price;
@@ -297,6 +303,19 @@ async function run() {
         clientSecret: paymentIntent.client_secret,
       });
     });
+    /****************************************************************************************************************** */
+
+    /**
+     * Save transactions to Mongodb
+     */
+    app.post("/payment-save", async (req, res) => {
+      const payment_info = req.body;
+      console.log(payment_info);
+      const save_payments = await paymentsCollection.insertOne(payment_info);
+      res.send(save_payments);
+    });
+
+    /***************************************************************************************************************** */
 
     /****************Extras*************** */
     app.put("/temp-addprice", async (req, res) => {
