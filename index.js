@@ -312,7 +312,25 @@ async function run() {
       const payment_info = req.body;
       console.log(payment_info);
       const save_payments = await paymentsCollection.insertOne(payment_info);
+      const bookingQuery = {
+        _id: new ObjectId(payment_info.Booking_Id),
+      };
+      const update_booking = await bookingsCollection.updateOne(
+        bookingQuery,
+        {
+          $set: { Paid: true },
+        },
+        { upsert: true }
+      );
+      console.log(update_booking);
       res.send(save_payments);
+    });
+
+    app.get("/payment-list", async (req, res) => {
+      const payer_email = req.query.email;
+      const query = { Pay_Email: payer_email };
+      const get_payments = await paymentsCollection.find(query).toArray();
+      res.send(get_payments);
     });
 
     /***************************************************************************************************************** */
